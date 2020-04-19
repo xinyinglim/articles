@@ -294,7 +294,7 @@ func UpdateWeather(w http.ResponseWriter, r *http.Request) {
 
 You can modify the code to pass in configuration data through the *http.Request object.
 
-To check that the function works as intented, you can deploy it with
+To check that the function works as intended, you can deploy it with
 ```
 $	gcloud functions deploy UpdateWeather --runtime go111 --trigger-http --allow-unauthenticated
 ```

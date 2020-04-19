@@ -1,10 +1,10 @@
 # Updating Cloud IoT Core Config with Google Cloud functions (in Go)
 
-Google Cloud IoT Core is a service that easily and securely connects to and manages IoT devices. Cloud IoT Core handles the connection and authentication of devices so that developers can focus on sending and receiving data from the devices.
+Google Cloud IoT Core is a service that easily and securely connects and manages IoT devices. Cloud IoT Core handles the connection and authentication of devices so that developers can focus on sending and receiving data from the devices.
 
 In this article, we will configure devices using Google Cloud IoT Core’s Go SDK. Then, we will wrap the code in a Google Cloud Function so that it can be deployed and run in a scalable way.
 
-You can find the full code [here](https://github.com/xinyinglim/articles/tree/master/cloudfunc-iotcore/main.go).
+You can find the full code [here](https://github.com/xinyinglim/articles/tree/master/cloudfunc-iotcore/cloudfunc.go).
 
 Note: Cloud IoT Core uses billable components of Google Cloud Platform. For small projects you should be able to stay within the free tier.
 
@@ -28,7 +28,7 @@ Note down:
 $	go get google.golang.org/api/cloudiot/v1
 ``` 
 
-# Go IoTCore SDK
+# Building the Function
 
 First, set imports.
 
@@ -62,7 +62,7 @@ Let's say the your IoT device is a fan and you need to remotely control it. We m
 ```json
 { "on" : true, "speed" : 40}
 ```
-For example, if the weather is hot, the fan is switched on at the highest speed.
+For example, if the weather is hot, you can send a configuration to switch on the fan at the highest speed.
 
 For convenience, let's write a struct to contain the setting.
 
@@ -130,7 +130,7 @@ call.Context(ctx)
 _, err = call.Do()
 ```
 
-Here's the full code so far:
+Here's the code so far:
 
 ```go
 package main
@@ -190,11 +190,11 @@ func main() {
 }
 
 ```
-
+# Running the function locally
 
 To run the code locally, you will need credentials to a service account with the correct IoT Core permissions. 
 
-Go to the [cloud console](console.cloud.google.com) > IAM & Admin > Service Accounts. Create a service account with the "Cloud IoT Device Controller permission". This allows the service account to change device configurations.
+Go to the [GCP Cloud Console](console.cloud.google.com) > IAM & Admin > Service Accounts. Create a service account with the "Cloud IoT Device Controller permission". This allows the service account to change device configurations.
 
 ![Give the service account the Cloud IoT Device Controller permission](./img/setpermission.png)
 
@@ -218,6 +218,8 @@ You will see your current configuration in the text box.
 
 You can also change device configuration here, directly from the console, but when you have many devices, it's more scalable to do it programmatically.
 
+# Convert to Cloud Function and Deploy
+
 Now that you have tested the code locally, you can deploy it to Cloud Functions for production use.
 
 # Writing the Cloud Function
@@ -234,7 +236,7 @@ $   go mod init
 $   go mod tidy
 ```
 
-Here's the full code for the Cloud Function. This code will update the config of only a single device, but you can modify it to handle more devices.
+Here's the full code for the Cloud Function. It's similar to the earlier code. This code updates the config of a single device, but you can modify it to handle more devices.
 ```go
 package main
 
@@ -247,6 +249,11 @@ import (
 
 	cloudiot "google.golang.org/api/cloudiot/v1"
 )
+
+type FanConfig struct {
+    On    bool `json:"on"`
+    Speed int  `json:"speed"`
+}
 
 func UpdateWeather(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
